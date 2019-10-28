@@ -1,16 +1,18 @@
 package pool
 
-import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
-type cb func([]int, int)
+type cb func(int)
 var cycle, end = true, false
 var callback cb
 
 func wait(n int) {
 	for cycle {
 		fmt.Println("Waiting...")
-		callback([]int{1,2,3}, n)
+		callback(n)
 		time.Sleep(time.Second)
 	}
 	end = true

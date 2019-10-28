@@ -2,12 +2,15 @@ package psort
 
 import "fmt"
 
+var s []int
+
 // Per thread sort
-func TSort(s []int, n int) {
-	fmt.Println("Callback")
+func TSort(n int) {
+	fmt.Println("Callback %d", s[n])
 
 }
 
-func Sort(s []int) {
+func Sort(target []int) {
 	fmt.Println("Sorting...")
+	s = target
 }
