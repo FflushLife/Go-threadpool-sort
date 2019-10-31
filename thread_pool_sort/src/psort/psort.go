@@ -11,6 +11,11 @@ type PSort struct {
 	tCount int
 }
 
+func New(target []int, tCount int) *PSort {
+	fmt.Println("Sort inited")
+	return &PSort{target, tCount}
+}
+
 // Sort engine
 func quicksort(a []int) []int {
     if len(a) < 2 {
@@ -46,9 +51,4 @@ func TSort(uInstance unsafe.Pointer, n int) {
 	var sliceThreadSize float64 = float64(len(psInstance.target)) / float64(psInstance.tCount)
 	// TODO:: redo
 	fmt.Println(quicksort(psInstance.target[int(float64(n) * sliceThreadSize):int(float64(n + 1) * sliceThreadSize)]))
-}
-
-func New(target []int, tCount int) PSort {
-	fmt.Println("Sort inited")
-	return PSort{target, tCount}
 }

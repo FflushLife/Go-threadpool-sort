@@ -7,42 +7,46 @@ import (
 	"unsafe"
 )
 
-type cb func(unsafe.Pointer, int)
-var cycle, end = true, false
-var callback cb
-var cbStruct unsafe.Pointer
-var br *barrier.Barrier
+type callBack func(unsafe.Pointer, int)
 
-func wait(n int) {
+type Pool struct {
+	cb callBack
+	// Callback data
+	cbStruct unsafe.Pointer
+	br *barrier.Barrier
+	cycle, end bool
+}
+
+func (p *Pool) wait(n int) {
 		//fmt.Println("Waiting...")
 		//callback(cbStruct, n)
 		// Learn why millisecond is required
-		br.Before()
-		fmt.Println("All threads are ready for job")
-	for cycle {
+	p.br.Before()
+	fmt.Println("All threads are ready for job")
+	for p.cycle {
 		time.Sleep(time.Second)
 	}
-	br.After()
+	p.br.After()
 	fmt.Println("All threads did the job")
 
-	end = true
+	p.end = true
 }
 
-func Create(tCount int, cbs unsafe.Pointer) {
-	cbStruct = cbs
-	br = barrier.New(tCount)
-	for i := 0; i < tCount; i++ {
-		go wait(i)
+func New(tCount int, cb callBack, cbs unsafe.Pointer) *Pool {
+	var p Pool = Pool {
+		cb: cb,
+		cbStruct: cbs,
+		br: barrier.New(tCount),
+		cycle: true,
+		end: false,
 	}
-	fmt.Printf("%d pools have been created\n", tCount)
-	for !end {}
-	fmt.Println("End")
+	return &p
 }
 
-func SetCallback(f cb) {
-	callback = f
+func (p *Pool) SetCallback(f callBack) {
+	p.cb = f
 }
 
-func SetCycle(c bool) {
-	cycle = c
+func (p *Pool) SetCycle(c bool) {
+	p.cycle = c
 }
