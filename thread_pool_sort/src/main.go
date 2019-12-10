@@ -36,5 +36,15 @@ func main() {
 		result = psort.Merge(result, sortInstance.GetTarget()[l:r])
 	}
 	fmt.Println("final time=", time.Now().Sub(start))
-	//fmt.Println(result)
+
+	sortInstance = psort.New(target[:10], tCount)
+	poolInstance.ChangeTask(unsafe.Pointer(sortInstance))
+	poolInstance.Start()
+	sliceThreadSize = float64(len(sortInstance.GetTarget())) / float64(tCount)
+	for i := uint64(0); i < tCount; i++ {
+		l := int(float64(i) * sliceThreadSize)
+		r := int(float64(i + 1) * sliceThreadSize)
+		result = psort.Merge(result, sortInstance.GetTarget()[l:r])
+	}
+	fmt.Println(result)
 }

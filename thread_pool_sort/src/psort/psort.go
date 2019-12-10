@@ -49,41 +49,15 @@ func TSort(uInstance unsafe.Pointer, n uint64) {
 	var psInstance PSort = *(*PSort)(uInstance)
 	var sliceThreadSize float64 = float64(len(psInstance.target)) / float64(psInstance.tCount)
 	var l, r int
-	// TODO:: redo
+
 	l = int(float64(n) * sliceThreadSize)
 	r = int(float64(n + 1) * sliceThreadSize)
-	tmp := append(psInstance.target[:l], quicksort(psInstance.target[l:r])...)
+	tmp := append(psInstance.target[:l], mergesort(psInstance.target[l:r])...)
 	psInstance.target = append(tmp, psInstance.target[r:]...)
 }
 
 // Sort engine
-func quicksort(a []int) []int {
-	//fmt.Printf("%p\n", a)
-//	if len(a) < 2 {
-//		return a
-//	}
-//
-//	left, right := 0, len(a)-1
-//	pivot := rand.Int() % len(a)
-//	a[pivot], a[right] = a[right], a[pivot]
-//
-//	for i, _ := range a {
-//		if a[i] < a[right] {
-//			a[left], a[i] = a[i], a[left]
-//			left++
-//		}
-//	}
-//
-//	a[left], a[right] = a[right], a[left]
-//
-//	quicksort(a[:left])
-//	quicksort(a[left+1:])
-//
-//	return a
-
-//	sort.Ints(a)
-//	return a
-
+func mergesort(a []int) []int {
     var num = len(a)
 
     if num == 1 {
@@ -103,7 +77,7 @@ func quicksort(a []int) []int {
         }
     }
 
-    return merge(quicksort(left), quicksort(right))
+    return merge(mergesort(left), mergesort(right))
 }
 
 func merge(left, right []int) (result []int) {
