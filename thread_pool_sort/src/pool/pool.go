@@ -2,7 +2,8 @@ package pool
 
 import (
 	"barrier"
-	"fmt"
+	//"fmt"
+	"sync"
 	"time"
 	"unsafe"
 )
@@ -14,6 +15,7 @@ type Pool struct {
 	// Callback data
 	cbStruct unsafe.Pointer
 	br *barrier.Barrier
+	wg sync.WaitGroup
 	cycle, started, end bool
 	tCount uint64
 }
@@ -35,23 +37,23 @@ func (p *Pool) Start() {
 	if !p.started {
 		p.started = true
 		for i := uint64(0); i < p.tCount; i++ {
+			p.wg.Add(1)
 			go p.wait(i);
 		}
 	}
-	for !p.end{}
+	//p.wg.Wait()
+	for !p.br.WorkIsDone(){time.Sleep(time.Millisecond)}
 }
 
 func (p *Pool) wait(n uint64) {
-	//callback(cbStruct, n)
 	// TODO:: learn why millisecond is required
 	p.br.Before()
-	fmt.Println("All threads are ready for job")
-	time.Sleep(time.Second)
 	p.cb(p.cbStruct, n)
 	p.br.After()
-	fmt.Println("All threads did the job")
+	p.wg.Done()
 
-	p.end = true
+	// TODO:: fix the error: p.end is set by the only goroutine
+	//p.end = true
 }
 
 func (p *Pool) SetCallback(f callBack) {

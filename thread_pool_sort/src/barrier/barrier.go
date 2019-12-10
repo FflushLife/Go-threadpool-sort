@@ -5,6 +5,7 @@ import "sync"
 type Barrier struct {
 	c uint64
 	n uint64
+	done bool
 	m sync.Mutex
 	before chan uint64
 	after chan uint64
@@ -23,6 +24,7 @@ func (b *Barrier) Before() {
 	b.m.Lock()
 	b.c += 1
 	if b.c == b.n {
+		b.done = false
 		for i := uint64(0); i < b.n; i++ {
 			b.before <- 1
 		}
@@ -35,10 +37,15 @@ func (b *Barrier) After() {
 	b.m.Lock()
 	b.c -= 1
 	if b.c == 0 {
+		b.done = true
 		for i := uint64(0); i < b.n; i++ {
 			b.after <- 1
 		}
 	}
 	b.m.Unlock()
 	<-b.after
+}
+
+func (b *Barrier) WorkIsDone() bool {
+	return b.done
 }
