@@ -14,7 +14,8 @@ type Pool struct {
 	cbStruct unsafe.Pointer
 	br *barrier.Barrier
 	wg sync.WaitGroup
-	cycle, started, end, taskChanged bool
+	m sync.Mutex
+	started, taskChanged, Locked bool
 	tCount uint64
 }
 
@@ -23,15 +24,15 @@ func New(tCount uint64, cb callBack, cbs unsafe.Pointer) *Pool {
 		cb: cb,
 		cbStruct: cbs,
 		br: barrier.New(tCount),
-		cycle: true,
 		started: false,
-		end: false,
+		Locked: false,
 		taskChanged: true,
 		tCount: tCount,
 	}
 	return &p
 }
 
+// Must be guaranteed that previous task ended
 func (p *Pool) Start() {
 	if !p.started {
 		p.started = true
@@ -39,18 +40,25 @@ func (p *Pool) Start() {
 			p.wg.Add(1)
 			go p.wait(i);
 		}
+	} else {
+		p.wg.Add((int)(p.tCount))
+	}
+	if (p.Locked) {
+		p.m.Unlock()
 	}
 	p.wg.Wait()
-	p.br.ResetWork()
 }
 
 func (p *Pool) wait(n uint64) {
 	for {
 		p.br.Before()
 		// Wait for new task
+		p.m.Lock()
 		if (!p.taskChanged) {
+			p.m.Unlock()
 			p.br.After()
 		} else {
+			p.m.Unlock()
 			p.cb(p.cbStruct, n)
 			p.br.After()
 			p.taskChanged = false
@@ -63,10 +71,15 @@ func (p *Pool) SetCallback(f callBack) {
 	p.cb = f
 }
 
-func (p *Pool) SetCycle(c bool) {
-	p.cycle = c
-}
-
 func (p *Pool) ChangeTask(cbs unsafe.Pointer) {
 	p.cbStruct = cbs;
+	p.taskChanged = true
+}
+
+func (p *Pool) Lock() {
+	p.m.Lock()
+}
+
+func (p *Pool) Unlock() {
+	p.m.Lock()
 }
