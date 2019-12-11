@@ -1,11 +1,6 @@
 package psort
 
-import (
-	"fmt"
-	//"math/rand"
-	//"sort"
-	"unsafe"
-)
+import "unsafe"
 
 type PSort struct {
 	target []int
@@ -13,7 +8,6 @@ type PSort struct {
 }
 
 func New(target []int, tCount uint64) *PSort {
-	fmt.Println("Sort inited")
 	return &PSort{target, tCount}
 }
 

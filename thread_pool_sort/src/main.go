@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"pool"
 	"psort"
 	"runtime"
+	"strconv"
 	"time"
 	"unsafe"
 )
@@ -12,7 +14,11 @@ import (
 func main() {
 	var sortInstance *psort.PSort
 	var poolInstance *pool.Pool
-	var tCount uint64 = 4
+	var tCount uint64 = 1
+
+	if (len(os.Args) > 1) {
+		tCount, _ = strconv.ParseUint(os.Args[1], 10, 64)
+	}
 	runtime.GOMAXPROCS(int(tCount))
 
 	fmt.Println("Start initializing...")
@@ -36,8 +42,10 @@ func main() {
 		result = psort.Merge(result, sortInstance.GetTarget()[l:r])
 	}
 	fmt.Println("final time=", time.Now().Sub(start))
+	fmt.Println(result[:100])
 
-	sortInstance = psort.New(target[:10], tCount)
+	result = make([]int, 0)
+	sortInstance = psort.New(target[:100], tCount)
 	poolInstance.ChangeTask(unsafe.Pointer(sortInstance))
 	poolInstance.Start()
 	sliceThreadSize = float64(len(sortInstance.GetTarget())) / float64(tCount)
@@ -46,5 +54,7 @@ func main() {
 		r := int(float64(i + 1) * sliceThreadSize)
 		result = psort.Merge(result, sortInstance.GetTarget()[l:r])
 	}
+	fmt.Println("final time=", time.Now().Sub(start))
 	fmt.Println(result)
+	fmt.Println(target[:100])
 }

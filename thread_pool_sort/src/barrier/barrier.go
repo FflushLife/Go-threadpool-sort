@@ -46,6 +46,6 @@ func (b *Barrier) After() {
 	<-b.after
 }
 
-func (b *Barrier) WorkIsDone() bool {
-	return b.done
+func (b *Barrier) ResetWork() {
+	b.done = false
 }

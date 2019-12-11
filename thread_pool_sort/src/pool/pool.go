@@ -2,9 +2,7 @@ package pool
 
 import (
 	"barrier"
-	"fmt"
 	"sync"
-	"time"
 	"unsafe"
 )
 
@@ -42,24 +40,23 @@ func (p *Pool) Start() {
 			go p.wait(i);
 		}
 	}
-	//p.wg.Wait()
-	for !p.br.WorkIsDone(){time.Sleep(time.Millisecond)}
+	p.wg.Wait()
+	p.br.ResetWork()
 }
 
 func (p *Pool) wait(n uint64) {
-	// TODO:: learn why millisecond is required
 	for {
 		p.br.Before()
-		fmt.Println("before")
-		for !p.taskChanged{time.Sleep(time.Millisecond)}
-		p.cb(p.cbStruct, n)
-		p.br.After()
-		p.taskChanged = false
-		p.wg.Done()
+		// Wait for new task
+		if (!p.taskChanged) {
+			p.br.After()
+		} else {
+			p.cb(p.cbStruct, n)
+			p.br.After()
+			p.taskChanged = false
+			p.wg.Done()
+		}
 	}
-
-	// TODO:: fix the error: p.end is set by the only goroutine
-	//p.end = true
 }
 
 func (p *Pool) SetCallback(f callBack) {
