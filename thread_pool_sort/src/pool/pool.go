@@ -51,10 +51,8 @@ func (p *Pool) Start() {
 func (p *Pool) wait(n uint64) {
 	for {
 		p.br.Before()
-		// Wait for new task
 		p.cb(p.cbStruct, n)
 		p.br.After()
-		// Decrement wCount
 		p.wg.Done()
 	}
 }
