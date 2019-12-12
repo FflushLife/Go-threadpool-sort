@@ -47,7 +47,6 @@ func main() {
 
 	result = make([]int, 0)
 	sortInstance = psort.New(target_copy, tCount)
-	poolInstance.Lock()
 	poolInstance.ChangeTask(unsafe.Pointer(sortInstance))
 	fmt.Println("new task started")
 	poolInstance.Start()

@@ -13,7 +13,6 @@ type Pool struct {
 	cbStruct unsafe.Pointer // Callback data
 	br *barrier.Barrier // Goroutines sync
 	wg sync.WaitGroup // Master sync
-	m sync.Mutex // For atomic check wautgroup current state
 	started, locked bool
 	tCount, wCount uint64
 }
@@ -41,9 +40,6 @@ func (p *Pool) Start() {
 		}
 	}
 	p.wg.Add((int)(p.tCount))
-	if (p.locked) {
-		p.Unlock()
-	}
 	p.br.GiveTask()
 	p.wg.Wait()
 }
@@ -63,14 +59,4 @@ func (p *Pool) SetCallback(f callBack) {
 
 func (p *Pool) ChangeTask(cbs unsafe.Pointer) {
 	p.cbStruct = cbs;
-}
-
-func (p *Pool) Lock() {
-	p.m.Lock()
-	p.locked = true
-}
-
-func (p *Pool) Unlock() {
-	p.locked = false
-	p.m.Unlock()
 }
