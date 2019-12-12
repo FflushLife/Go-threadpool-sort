@@ -53,17 +53,14 @@ func (p *Pool) wait(n uint64) {
 	for {
 		p.br.Before()
 		// Wait for new task
-		p.Lock()
-		if (p.wCount == 0) {
-			p.Unlock()
+		//TODO:: make channel instead of loop
+		if (atomic.LoadUint64(&p.wCount) == 0) {
 			p.br.After()
 		} else {
-			p.Unlock()
 			p.cb(p.cbStruct, n)
 			p.br.After()
 			// Decrement wCount
-			atomic.StoreUint64(&p.wCount,
-					atomic.LoadUint64(&p.wCount)-1)
+			atomic.StoreUint64(&p.wCount, 0)
 			p.wg.Done()
 		}
 	}
