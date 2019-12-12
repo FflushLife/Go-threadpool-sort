@@ -47,11 +47,10 @@ func main() {
 	result = make([]int, 0)
 	sortInstance = psort.New([]int{3,2,1,6,5,7,8,14,36,7645,12,65,63}, tCount)
 	poolInstance.Lock()
-	poolInstance.Locked = true
 	poolInstance.ChangeTask(unsafe.Pointer(sortInstance))
 	fmt.Println("new task started")
 	poolInstance.Start()
-	poolInstance.Unlock()
+	//poolInstance.Unlock()
 	sliceThreadSize = float64(len(sortInstance.GetTarget())) / float64(tCount)
 	for i := uint64(0); i < tCount; i++ {
 		l := int(float64(i) * sliceThreadSize)

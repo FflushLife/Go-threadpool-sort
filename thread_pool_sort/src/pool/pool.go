@@ -15,7 +15,7 @@ type Pool struct {
 	br *barrier.Barrier
 	wg sync.WaitGroup
 	m sync.Mutex
-	started, taskChanged, Locked bool
+	started, taskChanged, locked bool
 	tCount uint64
 }
 
@@ -25,7 +25,7 @@ func New(tCount uint64, cb callBack, cbs unsafe.Pointer) *Pool {
 		cbStruct: cbs,
 		br: barrier.New(tCount),
 		started: false,
-		Locked: false,
+		locked: false,
 		taskChanged: true,
 		tCount: tCount,
 	}
@@ -43,27 +43,30 @@ func (p *Pool) Start() {
 	} else {
 		p.wg.Add((int)(p.tCount))
 	}
-	if (p.Locked) {
-		p.m.Unlock()
+	if (p.locked) {
+		p.Unlock()
 	}
 	p.wg.Wait()
+
+	p.Lock()
+	p.taskChanged = false
+	p.Unlock()
+	// Implement number atomic value of members in waitgroup
 }
 
 func (p *Pool) wait(n uint64) {
 	for {
 		p.br.Before()
 		// Wait for new task
-		p.m.Lock()
+		p.Lock()
 		if (!p.taskChanged) {
-			p.m.Unlock()
+			p.Unlock()
 			p.br.After()
 		} else {
-			p.m.Unlock()
+			p.Unlock()
 			p.cb(p.cbStruct, n)
 			p.br.After()
-			p.taskChanged = false
-			p.wg.Done()
-		}
+			p.wg.Done()}
 	}
 }
 
@@ -78,8 +81,10 @@ func (p *Pool) ChangeTask(cbs unsafe.Pointer) {
 
 func (p *Pool) Lock() {
 	p.m.Lock()
+	p.locked = true
 }
 
 func (p *Pool) Unlock() {
-	p.m.Lock()
+	p.locked = false
+	p.m.Unlock()
 }
