@@ -3,6 +3,7 @@ package pool
 import (
 	"barrier"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -15,8 +16,8 @@ type Pool struct {
 	br *barrier.Barrier
 	wg sync.WaitGroup
 	m sync.Mutex
-	started, taskChanged, locked bool
-	tCount uint64
+	started, locked bool
+	tCount, wCount uint64
 }
 
 func New(tCount uint64, cb callBack, cbs unsafe.Pointer) *Pool {
@@ -26,13 +27,14 @@ func New(tCount uint64, cb callBack, cbs unsafe.Pointer) *Pool {
 		br: barrier.New(tCount),
 		started: false,
 		locked: false,
-		taskChanged: true,
 		tCount: tCount,
+		wCount: 0,
 	}
 	return &p
 }
 
 // Must be guaranteed that previous task ended
+// Needs lock
 func (p *Pool) Start() {
 	if !p.started {
 		p.started = true
@@ -41,17 +43,13 @@ func (p *Pool) Start() {
 			go p.wait(i);
 		}
 	} else {
-		p.wg.Add((int)(p.tCount))
+		p.wg.Add((int)(p.tCount)) //TODO:: Optimize line
 	}
+	p.wCount = p.tCount
 	if (p.locked) {
 		p.Unlock()
 	}
 	p.wg.Wait()
-
-	p.Lock()
-	p.taskChanged = false
-	p.Unlock()
-	// Implement number atomic value of members in waitgroup
 }
 
 func (p *Pool) wait(n uint64) {
@@ -59,14 +57,17 @@ func (p *Pool) wait(n uint64) {
 		p.br.Before()
 		// Wait for new task
 		p.Lock()
-		if (!p.taskChanged) {
+		if (p.wCount == 0) {
 			p.Unlock()
 			p.br.After()
 		} else {
 			p.Unlock()
 			p.cb(p.cbStruct, n)
 			p.br.After()
-			p.wg.Done()}
+			// Decrement wCount
+			atomic.StoreUint64(&p.wCount, atomic.LoadUint64(&p.wCount)-1)
+			p.wg.Done()
+		}
 	}
 }
 
@@ -76,7 +77,6 @@ func (p *Pool) SetCallback(f callBack) {
 
 func (p *Pool) ChangeTask(cbs unsafe.Pointer) {
 	p.cbStruct = cbs;
-	p.taskChanged = true
 }
 
 func (p *Pool) Lock() {

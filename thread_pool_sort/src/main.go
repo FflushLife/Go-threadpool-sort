@@ -59,5 +59,4 @@ func main() {
 	}
 	fmt.Println("final time=", time.Now().Sub(start))
 	fmt.Println(result)
-	fmt.Println(target[:100])
 }
