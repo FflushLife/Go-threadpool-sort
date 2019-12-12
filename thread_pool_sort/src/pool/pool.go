@@ -11,11 +11,10 @@ type callBack func(unsafe.Pointer, uint64)
 
 type Pool struct {
 	cb callBack
-	// Callback data
-	cbStruct unsafe.Pointer
-	br *barrier.Barrier
-	wg sync.WaitGroup
-	m sync.Mutex
+	cbStruct unsafe.Pointer // Callback data
+	br *barrier.Barrier // Goroutines sync
+	wg sync.WaitGroup // Master sync
+	m sync.Mutex // For atomic check wautgroup current state
 	started, locked bool
 	tCount, wCount uint64
 }
@@ -34,17 +33,15 @@ func New(tCount uint64, cb callBack, cbs unsafe.Pointer) *Pool {
 }
 
 // Must be guaranteed that previous task ended
-// Needs lock
+// Needs lock after first use
 func (p *Pool) Start() {
 	if !p.started {
 		p.started = true
 		for i := uint64(0); i < p.tCount; i++ {
-			p.wg.Add(1)
 			go p.wait(i);
 		}
-	} else {
-		p.wg.Add((int)(p.tCount)) //TODO:: Optimize line
 	}
+	p.wg.Add((int)(p.tCount))
 	p.wCount = p.tCount
 	if (p.locked) {
 		p.Unlock()
@@ -65,7 +62,8 @@ func (p *Pool) wait(n uint64) {
 			p.cb(p.cbStruct, n)
 			p.br.After()
 			// Decrement wCount
-			atomic.StoreUint64(&p.wCount, atomic.LoadUint64(&p.wCount)-1)
+			atomic.StoreUint64(&p.wCount,
+					atomic.LoadUint64(&p.wCount)-1)
 			p.wg.Done()
 		}
 	}
