@@ -8,6 +8,7 @@ type Barrier struct {
 	m sync.Mutex
 	before chan uint64
 	after chan uint64
+	taskGiven chan bool
 }
 
 func New(n uint64) *Barrier {
@@ -15,6 +16,7 @@ func New(n uint64) *Barrier {
 		n: n,
 		before:	make(chan uint64, n),
 		after: make(chan uint64, n),
+		taskGiven: make(chan bool),
 	}
 	return &b
 }
@@ -23,6 +25,7 @@ func (b *Barrier) Before() {
 	b.m.Lock()
 	b.c += 1
 	if b.c == b.n {
+		<-b.taskGiven
 		for i := uint64(0); i < b.n; i++ {
 			b.before <- 1
 		}
@@ -41,4 +44,8 @@ func (b *Barrier) After() {
 	}
 	b.m.Unlock()
 	<-b.after
+}
+
+func (b* Barrier) GiveTask() {
+	b.taskGiven<-true
 }

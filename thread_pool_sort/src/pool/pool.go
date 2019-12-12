@@ -3,7 +3,6 @@ package pool
 import (
 	"barrier"
 	"sync"
-	"sync/atomic"
 	"unsafe"
 )
 
@@ -42,10 +41,10 @@ func (p *Pool) Start() {
 		}
 	}
 	p.wg.Add((int)(p.tCount))
-	p.wCount = p.tCount
 	if (p.locked) {
 		p.Unlock()
 	}
+	p.br.GiveTask()
 	p.wg.Wait()
 }
 
@@ -53,16 +52,10 @@ func (p *Pool) wait(n uint64) {
 	for {
 		p.br.Before()
 		// Wait for new task
-		//TODO:: make channel instead of loop
-		if (atomic.LoadUint64(&p.wCount) == 0) {
-			p.br.After()
-		} else {
-			p.cb(p.cbStruct, n)
-			p.br.After()
-			// Decrement wCount
-			atomic.StoreUint64(&p.wCount, 0)
-			p.wg.Done()
-		}
+		p.cb(p.cbStruct, n)
+		p.br.After()
+		// Decrement wCount
+		p.wg.Done()
 	}
 }
 
