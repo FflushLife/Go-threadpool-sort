@@ -2,17 +2,41 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"pool"
 	"psort"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 )
 
-// TODO:: get arrays list from file and create python generator
+func createTasks() {
+	data_in := make([]byte, 8192)
+
+	file, err := os.Open("rand_data.txt")
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+
+	_, err = file.Read(data_in)
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+	data := strings.Split(string(data_in), "\n")
+
+	for _, el := range data {
+		fmt.Println(el)
+	}
+}
+
 func main() {
+	createTasks()
 	var sortInstance *psort.PSort
 	var poolInstance *pool.Pool
 	var tCount uint64 = 1
