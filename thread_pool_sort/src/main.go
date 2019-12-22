@@ -13,8 +13,9 @@ import (
 	"unsafe"
 )
 
-func createTasks() {
-	data_in := make([]byte, 8192)
+func createTasks() [][]uint64{
+	data_in := make([]byte, 8192*64)
+	var tasks [][]uint64
 
 	file, err := os.Open("rand_data.txt")
 	defer file.Close()
@@ -31,12 +32,24 @@ func createTasks() {
 	data := strings.Split(string(data_in), "\n")
 
 	for _, el := range data {
-		fmt.Println(el)
+		var task_single []uint64
+		numbers_str := strings.Split(el, ",")
+		for _, number_str := range numbers_str {
+			number_64, err := strconv.ParseUint(number_str, 10, 64)
+			if err != nil {
+				log.Fatal(err)
+				panic(err)
+			}
+
+			task_single = append(task_single, number_64)
+		}
+		tasks = append(tasks, task_single)
 	}
+	return tasks
 }
 
 func main() {
-	createTasks()
+	fmt.Println(createTasks())
 	var sortInstance *psort.PSort
 	var poolInstance *pool.Pool
 	var tCount uint64 = 1
