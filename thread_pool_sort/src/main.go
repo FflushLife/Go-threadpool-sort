@@ -48,6 +48,16 @@ func createTasks() [][]int {
 	return tasks
 }
 
+func writeTime(ms int64, tCount uint64) {
+	file, err := os.OpenFile("times.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+	file.WriteString(strconv.FormatInt(ms, 10)+","+strconv.FormatUint(tCount, 10)+"\n")
+}
+
 func writeResult(result []int, counter int) {
 	file, err := os.Create("results/result"+strconv.Itoa(counter)+".txt")
 	defer file.Close()
@@ -75,6 +85,8 @@ func main() {
 
 	fmt.Println("Start initializing...")
 	tasks = createTasks()
+	fmt.Println("Tasks created")
+	fmt.Println("Processing...")
 
 	for i, target := range tasks {
 		sortInstance = psort.New(target, tCount)
@@ -83,10 +95,12 @@ func main() {
 
 		start := time.Now()
 		poolInstance.Start();
+		writeTime(time.Now().Sub(start).Nanoseconds() / 1000, tCount)
 		fmt.Println("time=", time.Now().Sub(start))
 
 		result := make([]int, 0)
 		var sliceThreadSize float64 = float64(len(sortInstance.GetTarget())) / float64(tCount)
+		// Merging
 		for i := uint64(0); i < tCount; i++ {
 			l := int(float64(i) * sliceThreadSize)
 			r := int(float64(i + 1) * sliceThreadSize)
