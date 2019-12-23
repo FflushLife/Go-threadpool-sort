@@ -48,6 +48,10 @@ func createTasks() [][]int {
 	return tasks
 }
 
+func writeResult(result []int, counter int) {
+
+}
+
 func main() {
 	var sortInstance *psort.PSort
 	var poolInstance *pool.Pool
@@ -79,6 +83,6 @@ func main() {
 			result = psort.Merge(result, sortInstance.GetTarget()[l:r])
 		}
 		fmt.Println("final time=", time.Now().Sub(start))
-		fmt.Println(result)
+		//fmt.Println(result)
 	}
 }
