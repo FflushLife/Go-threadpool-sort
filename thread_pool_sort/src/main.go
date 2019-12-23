@@ -49,7 +49,17 @@ func createTasks() [][]int {
 }
 
 func writeResult(result []int, counter int) {
+	file, err := os.Create("results/result"+strconv.Itoa(counter)+".txt")
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
 
+	for _, number := range result {
+		file.WriteString(strconv.Itoa(number)+",")
+	}
+	file.WriteString("\n")
 }
 
 func main() {
@@ -66,7 +76,7 @@ func main() {
 	fmt.Println("Start initializing...")
 	tasks = createTasks()
 
-	for _, target := range tasks {
+	for i, target := range tasks {
 		sortInstance = psort.New(target, tCount)
 		poolInstance = pool.New(tCount, psort.TSort, unsafe.Pointer(sortInstance))
 		poolInstance.ChangeTask(unsafe.Pointer(sortInstance))
@@ -83,6 +93,6 @@ func main() {
 			result = psort.Merge(result, sortInstance.GetTarget()[l:r])
 		}
 		fmt.Println("final time=", time.Now().Sub(start))
-		//fmt.Println(result)
+		writeResult(result, i)
 	}
 }
